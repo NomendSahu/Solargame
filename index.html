@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Stories - Solar System Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
+            cursor: crosshair;
+        }
+
+        /* Mission Tracker */
+        .mission-tracker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            z-index: 1000;
+            border-bottom: 2px solid #00ffff;
+            backdrop-filter: blur(10px);
+        }
+
+        .tracker-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mission-title {
+            font-size: 1.2rem;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .progress-container {
+            flex: 1;
+            margin: 0 30px;
+            background: rgba(255, 255, 255, 0.1);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #00ffff;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00);
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .stars-collected {
+            font-size: 1.5rem;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        /* Book Opening Animation */
+        .book-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            transition: opacity 1s ease;
+        }
+
+        .book {
+            width: 600px;
+            height: 400px;
+            position: relative;
+            perspective: 2000px;
+        }
+
+        .book-page {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, #2c1810, #3d2415);
+            border: 3px solid #8b6914;
+            transform-origin: left center;
+            transition: transform 2s ease;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .book-page-left {
+            left: 0;
+            background: linear-gradient(to left, #2c1810, #3d2415);
+            transform-origin: right center;
+        }
+
+        .book-page-right {
+            right: 0;
+        }
+
+        .book.open .book-page-left {
+            transform: rotateY(-180deg);
+        }
+
+        .book.open .book-page-right {
+            transform: rotateY(180deg);
+        }
+
+        .book-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+        }
+
+        .book-title h1 {
+            font-size: 3rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .book-title p {
+            font-size: 1.2rem;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+            50% { text-shadow: 0 0 40px #ffd700, 0 0 60px #ffd700; }
+        }
+
+        /* Starfield Background */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px white;
+            animation: shoot 3s linear infinite;
+        }
+
+        @keyframes shoot {
+            0% {
+                transform: translateX(0) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-500px) translateY(500px);
+                opacity: 0;
+            }
+        }
+
+        /* Rocket Launch Section */
+        .rocket-section {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #000428, #004e92);
+        }
+
+        .rocket {
+            width: 100px;
+            height: 200px;
+            position: relative;
+            transition: transform 3s ease;
+        }
+
+        .rocket.launch {
+            transform: translateY(-1500px) scale(0.5);
+        }
+
+        .rocket-body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #ff0000, #cc0000);
+            border-radius: 50% 50% 10px 10px;
+            position: relative;
+            box-shadow: 0 0 30px #ff0000;
+        }
+
+        .rocket-window {
+            width: 40px;
+            height: 40px;
+            background: #00ffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 3px solid #fff;
+        }
+
+        .rocket-fin {
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 60px solid #cc0000;
+            position: absolute;
+            bottom: -40px;
+        }
+
+        .rocket-fin.left {
+            left: -20px;
+        }
+
+        .rocket-fin.right {
+            right: -20px;
+        }
+
+        .flame {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 80px;
+            background: linear-gradient(to bottom, #ff6600, #ffff00, transparent);
+            border-radius: 50% 50% 50% 50%;
+            animation: flicker 0.1s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        .rocket.launch .flame {
+            opacity: 1;
+        }
+
+        @keyframes flicker {
+            0%, 100% { transform: translateX(-50%) scaleY(1); }
+            50% { transform: translateX(-50%) scaleY(1.2); }
+        }
+
+        .launch-text {
+            position: absolute;
+            bottom: 100px;
+            font-size: 2rem;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Planet Sections */
+        .planet-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 100px 20px;
+        }
+
+        .planet-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            max-width: 1400px;
+            width: 100%;
+            gap: 50px;
+            flex-wrap: wrap;
+        }
+
+        .planet-visual {
+            position: relative;
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .planet-image {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            box-shadow: 0 0 60px currentColor;
+            animation: rotate 60s linear infinite, float 6s ease-in-out infinite;
+            position: relative;
+        }
+
+        .planet-image:hover {
+            transform: scale(1.1);
+            filter: brightness(1.3);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .planet-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background: radial-gradient(circle, currentColor, transparent);
+            opacity: 0.3;
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.5; }
+        }
+
+        .planet-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .planet-name {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px currentColor;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .planet-description {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .fact-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid currentColor;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            transform: scale(0);
+            transition: transform 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .fact-card.visible {
+            transform: scale(1);
+        }
+
+        .fact-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+
+        .fact-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .fact-card li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.1rem;
+        }
+
+        .fact-card li:last-child {
+            border-bottom: none;
+        }
+
+        .collect-star-btn {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px #ffd700;
+        }
+
+        .collect-star-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px #ffd700;
+        }
+
+        .collect-star-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .star-animation {
+            position: fixed;
+            font-size: 3rem;
+            animation: collect-star 1s ease forwards;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes collect-star {
+            0% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.2) translateY(-500px);
+                opacity: 0;
+            }
+        }
+
+        /* Congratulations Screen */
+        .congrats-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .congrats-title {
+            font-size: 5rem;
+            color: #ffd700;
+            text-shadow: 0 0 40px #ffd700;
+            margin-bottom: 30px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .congrats-message {
+            font-size: 1.8rem;
+            max-width: 800px;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .firework {
+            position: fixed;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: firework 1s ease-out forwards;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-300px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Color schemes for planets */
+        .mercury { color: #8c7853; }
+        .venus { color: #ffc649; }
+        .earth { color: #4a90e2; }
+        .mars { color: #e27b58; }
+        .jupiter { color: #c88b3a; }
+        /* NEW PLANET COLORS */
+        .saturn { color: #f0e68c; } /* Khaki/Pale Gold for Saturn */
+        .uranus { color: #9be5e5; } /* Light Cyan for Uranus */
+        .neptune { color: #4169e1; } /* Royal Blue for Neptune */
+
+        /* Special style for Saturn's rings (to keep the planet image clean, this uses a background element) */
+        .saturn .planet-visual::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(20deg);
+            width: 600px; /* wider than planet */
+            height: 10px;
+            border: 3px solid rgba(240, 230, 140, 0.7);
+            border-radius: 50%;
+            box-shadow: 0 0 20px #f0e68c;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+
+        /* Audio Controls */
+        .audio-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .audio-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .audio-toggle::before {
+            content: '🔊';
+            font-size: 1.5rem;
+        }
+
+        .audio-toggle.muted::before {
+            content: '🔇';
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .planet-name {
+                font-size: 2.5rem;
+            }
+
+            .planet-image {
+                width: 250px;
+                height: 250px;
+            }
+
+            .book {
+                width: 90%;
+                height: 300px;
+            }
+
+            .book-title h1 {
+                font-size: 2rem;
+            }
+
+            .congrats-title {
+                font-size: 3rem;
+            }
+
+            .mission-title {
+                font-size: 0.9rem;
+            }
+
+            .tracker-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .progress-container {
+                margin: 10px 0;
+            }
+
+            .saturn .planet-visual::after {
+                width: 350px; /* Adjust ring size for mobile */
+                height: 5px;
+                border-width: 2px;
+            }
+        }
+
+        /* Loading indicator */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #00ffff;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="mission-tracker">
+        <div class="tracker-content">
+            <div class="mission-title">YOUR MISSION: Explore the Solar System</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="stars-collected">⭐ <span id="starCount">0</span>/8</div> </div>
+    </div>
+
+    <div class="starfield" id="starfield"></div>
+
+    <div class="book-container" id="bookContainer">
+        <div class="book" id="book">
+            <div class="book-page book-page-left"></div>
+            <div class="book-page book-page-right"></div>
+            <div class="book-title">
+                <h1>SPACE ODYSSEY</h1>
+                <p>An Animated Journey To Solar System</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="rocket-section" id="rocketSection">
+        <div class="rocket" id="rocket">
+            <div class="rocket-body">
+                <div class="rocket-window"></div>
+            </div>
+            <div class="rocket-fin left"></div>
+            <div class="rocket-fin right"></div>
+            <div class="flame"></div>
+        </div>
+        <div class="launch-text" id="launchText">Click to Launch! 🚀</div>
+    </div>
+
+    <div class="planet-section mercury" id="mercury">
+        <div class="planet-content">
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Mercury_in_color_-_Prockter07-edit.jpg" 
+                    alt="Mercury" class="planet-image" onclick="toggleFacts('mercury')">
+            </div>
+            <div class="planet-info">
+                <h2 class="planet-name">MERCURY</h2>
+                <p class="planet-description">
+                    The smallest planet in our solar system and closest to the Sun. Mercury races around the Sun 
+                    faster than any other planet, completing an orbit in just 88 Earth days. Despite being scorching 
+                    hot on its sunlit side, the dark side can be freezing cold.
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'mercury')">Collect Star ⭐</button>
+                <div class="fact-card" id="mercury-facts">
+                    <h3>Mercury Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -290°F to 800°F</li>
+                        <li>📏 Diameter: 4,879 km</li>
+                        <li>⏱️ Day Length: 59 Earth days</li>
+                        <li>🔄 Year Length: 88 Earth days</li>
+                        <li>🌙 Moons: 0</li>
+                        <li>⚡ Fun Fact: Named after the Roman messenger god!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section venus" id="venus">
+        <div class="planet-content">
+            <div class="planet-info">
+                <h2 class="planet-name">VENUS</h2>
+                <p class="planet-description">
+                    The hottest planet in our solar system, even though Mercury is closer to the Sun. Venus is 
+                    shrouded in thick clouds of sulfuric acid that trap heat in a runaway greenhouse effect. 
+                    It rotates in the opposite direction to most planets, meaning the Sun rises in the west!
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'venus')">Collect Star ⭐</button>
+                <div class="fact-card" id="venus-facts">
+                    <h3>Venus Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: 900°F average</li>
+                        <li>📏 Diameter: 12,104 km</li>
+                        <li>⏱️ Day Length: 243 Earth days</li>
+                        <li>🔄 Year Length: 225 Earth days</li>
+                        <li>🌙 Moons: 0</li>
+                        <li>⚡ Fun Fact: A day is longer than a year!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg" 
+                    alt="Venus" class="planet-image" onclick="toggleFacts('venus')">
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section earth" id="earth">
+        <div class="planet-content">
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg" 
+                    alt="Earth" class="planet-image" onclick="toggleFacts('earth')">
+            </div>
+            <div class="planet-info">
+                <h2 class="planet-name">EARTH</h2>
+                <p class="planet-description">
+                    Our home planet! Earth is the only known planet to harbor life. It has liquid water on its 
+                    surface, a protective atmosphere, and a moderate climate. The perfect distance from the Sun 
+                    allows for the incredible diversity of life we see today.
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'earth')">Collect Star ⭐</button>
+                <div class="fact-card" id="earth-facts">
+                    <h3>Earth Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -128°F to 136°F</li>
+                        <li>📏 Diameter: 12,742 km</li>
+                        <li>⏱️ Day Length: 24 hours</li>
+                        <li>🔄 Year Length: 365.25 days</li>
+                        <li>🌙 Moons: 1 (The Moon)</li>
+                        <li>⚡ Fun Fact: 71% covered in water!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section mars" id="mars">
+        <div class="planet-content">
+            <div class="planet-info">
+                <h2 class="planet-name">MARS</h2>
+                <p class="planet-description">
+                    The Red Planet! Mars gets its reddish color from iron oxide (rust) on its surface. It has the 
+                    largest volcano in the solar system (Olympus Mons) and a canyon system that dwarfs the Grand Canyon. 
+                    Scientists are actively searching for signs of ancient microbial life.
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'mars')">Collect Star ⭐</button>
+                <div class="fact-card" id="mars-facts">
+                    <h3>Mars Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -195°F to 70°F</li>
+                        <li>📏 Diameter: 6,779 km</li>
+                        <li>⏱️ Day Length: 24.6 hours</li>
+                        <li>🔄 Year Length: 687 Earth days</li>
+                        <li>🌙 Moons: 2 (Phobos & Deimos)</li>
+                        <li>⚡ Fun Fact: Home to the largest volcano!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg" 
+                    alt="Mars" class="planet-image" onclick="toggleFacts('mars')">
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section jupiter" id="jupiter">
+        <div class="planet-content">
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg" 
+                    alt="Jupiter" class="planet-image" onclick="toggleFacts('jupiter')">
+            </div>
+            <div class="planet-info">
+                <h2 class="planet-name">JUPITER</h2>
+                <p class="planet-description">
+                    The largest planet in our solar system! Jupiter is a gas giant with a famous Great Red Spot—a 
+                    giant storm that has raged for hundreds of years. It has a powerful magnetic field and acts as 
+                    a cosmic vacuum cleaner, protecting Earth from asteroids.
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'jupiter')">Collect Star ⭐</button>
+                <div class="fact-card" id="jupiter-facts">
+                    <h3>Jupiter Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -234°F average</li>
+                        <li>📏 Diameter: 139,820 km</li>
+                        <li>⏱️ Day Length: 10 hours</li>
+                        <li>🔄 Year Length: 12 Earth years</li>
+                        <li>🌙 Moons: 95+ known moons</li>
+                        <li>⚡ Fun Fact: Could fit 1,300 Earths inside!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section saturn" id="saturn">
+        <div class="planet-content">
+            <div class="planet-info">
+                <h2 class="planet-name">SATURN</h2>
+                <p class="planet-description">
+                    The magnificent ringed planet! Saturn is the second-largest planet and is famous for its vast, 
+                    complex system of rings made of ice particles and rock fragments. It's a gas giant, but less dense 
+                    than water—it would float in a giant bathtub!
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'saturn')">Collect Star ⭐</button>
+                <div class="fact-card" id="saturn-facts">
+                    <h3>Saturn Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -288°F average</li>
+                        <li>📏 Diameter: 120,536 km</li>
+                        <li>⏱️ Day Length: 10.7 hours</li>
+                        <li>🔄 Year Length: 29.5 Earth years</li>
+                        <li>🌙 Moons: 146+ known moons</li>
+                        <li>⚡ Fun Fact: Its rings are 90% water ice!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Saturn_during_Equinox_-_NASA.jpg" 
+                    alt="Saturn" class="planet-image" onclick="toggleFacts('saturn')">
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section uranus" id="uranus">
+        <div class="planet-content">
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3d/Uranus2.jpg" 
+                    alt="Uranus" class="planet-image" onclick="toggleFacts('uranus')">
+            </div>
+            <div class="planet-info">
+                <h2 class="planet-name">URANUS</h2>
+                <p class="planet-description">
+                    The ice giant that spins on its side! Uranus is unique because its axis of rotation is tilted 
+                    almost parallel to its orbit, likely due to a massive ancient collision. This results in extreme, 
+                    decades-long seasons on the planet.
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'uranus')">Collect Star ⭐</button>
+                <div class="fact-card" id="uranus-facts">
+                    <h3>Uranus Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -357°F average</li>
+                        <li>📏 Diameter: 51,118 km</li>
+                        <li>⏱️ Day Length: 17.2 hours (retrograde)</li>
+                        <li>🔄 Year Length: 84 Earth years</li>
+                        <li>🌙 Moons: 27 known moons</li>
+                        <li>⚡ Fun Fact: The coldest planet in the solar system!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="planet-section neptune" id="neptune">
+        <div class="planet-content">
+            <div class="planet-info">
+                <h2 class="planet-name">NEPTUNE</h2>
+                <p class="planet-description">
+                    The distant blue giant and the windiest world in the solar system. Neptune, a large ice giant, 
+                    has fierce storms, including a Great Dark Spot similar to Jupiter's, and the fastest wind speeds 
+                    ever recorded—up to 1,200 mph!
+                </p>
+                <button class="collect-star-btn" onclick="collectStar(this, 'neptune')">Collect Star ⭐</button>
+                <div class="fact-card" id="neptune-facts">
+                    <h3>Neptune Facts</h3>
+                    <ul>
+                        <li>🌡️ Temperature: -373°F average</li>
+                        <li>📏 Diameter: 49,244 km</li>
+                        <li>⏱️ Day Length: 16.1 hours</li>
+                        <li>🔄 Year Length: 165 Earth years</li>
+                        <li>🌙 Moons: 16 known moons</li>
+                        <li>⚡ Fun Fact: Invisible to the naked eye!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="planet-visual">
+                <div class="planet-glow"></div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/06/Neptune_-_Voyager_2_%2829347980845%29_cropped.jpg" 
+                    alt="Neptune" class="planet-image" onclick="toggleFacts('neptune')">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="congrats-section" id="congratsSection" style="display: none;">
+        <h1 class="congrats-title">🎉 MISSION COMPLETE! 🎉</h1>
+        <p class="congrats-message">
+            Congratulations, Space Explorer! You've successfully journeyed through the entire solar system, 
+            collecting knowledge from Mercury all the way to Neptune. You've earned all **8 stars** and become a certified Solar System Expert!
+        </p>
+        <p class="congrats-message">
+            The universe is vast and full of wonders. Keep exploring, keep learning, and never stop looking up! 🌟
+        </p>
+    </div>
+
+    <div class="audio-toggle" id="audioToggle" onclick="toggleAudio()"></div>
+
+    <script>
+        // Game State
+        let starsCollected = 0;
+        const totalStars = 8; // UPDATED TOTAL STARS
+        let audioEnabled = true;
+
+        // The list of all planets to manage the unlock sequence
+        const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+
+        // Create starfield
+        function createStarfield() {
+            const starfield = document.getElementById('starfield');
+            
+            // Create regular stars
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starfield.appendChild(star);
+            }
+
+            // Create shooting stars
+            for (let i = 0; i < 5; i++) {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'shooting-star';
+                shootingStar.style.left = Math.random() * 100 + '%';
+                shootingStar.style.top = Math.random() * 50 + '%';
+                shootingStar.style.animationDelay = Math.random() * 5 + 's';
+                starfield.appendChild(shootingStar);
+            }
+        }
+
+        // Book opening animation
+        function openBook() {
+            const book = document.getElementById('book');
+            const bookContainer = document.getElementById('bookContainer');
+            
+            setTimeout(() => {
+                book.classList.add('open');
+            }, 1000);
+
+            setTimeout(() => {
+                bookContainer.style.opacity = '0';
+                setTimeout(() => {
+                    bookContainer.style.display = 'none';
+                }, 1000);
+            }, 3500);
+        }
+
+        // Rocket launch
+        function setupRocketLaunch() {
+            const rocketSection = document.getElementById('rocketSection');
+            const rocket = document.getElementById('rocket');
+            const launchText = document.getElementById('launchText');
+
+            rocketSection.addEventListener('click', () => {
+                launchText.style.display = 'none';
+                rocket.classList.add('launch');
+                playSound('launch');
+                
+                setTimeout(() => {
+                    rocketSection.style.opacity = '0';
+                    setTimeout(() => {
+                        rocketSection.style.display = 'none';
+                    }, 1000);
+                }, 3000);
+            });
+        }
+
+        // Toggle fact cards
+        function toggleFacts(planet)
+        {
+            const factCard = document.getElementById(planet + '-facts');
+            factCard.classList.toggle('visible');
+            playSound('click');
+        }
+
+        // Collect star (UPDATED to use the original variable name but with new total)
+        function collectStar(button, planet) {
+            if (button.disabled) return;
+            
+            button.disabled = true;
+            button.textContent = 'Star Collected! ✅';
+            starsCollected++;
+            
+            // Update star count
+            document.getElementById('starCount').textContent = starsCollected;
+            
+            // Update progress bar
+            const progress = (starsCollected / totalStars) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Create star animation
+            const starAnim = document.createElement('div');
+            starAnim.className = 'star-animation';
+            starAnim.textContent = '⭐';
+            starAnim.style.left = button.getBoundingClientRect().left + 'px';
+            starAnim.style.top = button.getBoundingClientRect().top + 'px';
+            document.body.appendChild(starAnim);
+            
+            playSound('star');
+            
+            setTimeout(() => {
+                starAnim.remove();
+            }, 1000);
+            
+            // Check if all stars collected
+            if (starsCollected === totalStars) {
+                setTimeout(() => {
+                    showCongratulations();
+                }, 1500);
+            } else {
+                 // Unlock the next planet if not finished
+                unlockNextPlanet();
+            }
+        }
+
+        // Show congratulations
+        function showCongratulations() {
+            const congratsSection = document.getElementById('congratsSection');
+            congratsSection.style.display = 'flex';
+            congratsSection.scrollIntoView({ behavior: 'smooth' });
+            
+            playSound('complete');
+            createFireworks();
+        }
+
+        // Create fireworks
+        function createFireworks() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    for (let j = 0; j < 10; j++) {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = Math.random() * 100 + '%';
+                        firework.style.top = Math.random() * 100 + '%';
+                        firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        firework.style.animationDelay = Math.random() * 0.5 + 's';
+                        document.body.appendChild(firework);
+                        
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 1000);
+                    }
+                }, i * 200);
+            }
+        }
+
+        // Parallax effect
+        function setupParallax() {
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const stars = document.querySelectorAll('.star');
+                
+                stars.forEach((star, index) => {
+                    const speed = (index % 3 + 1) * 0.5;
+                    star.style.transform = `translateY(${scrolled * speed}px)`;
+                });
+            });
+        }
+
+        // Audio functions
+        function playSound(type) {
+            if (!audioEnabled) return;
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(type) {
+                case 'launch':
+                    oscillator.frequency.value = 100;
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 2);
+                    break;
+                    
+                case 'star':
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    
+                    // Add a second tone for harmony
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode2 = audioContext.createGain(); // Need a separate gain for the second one if connected to the main one
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioContext.destination);
+                    gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator2.frequency.value = 1000;
+                    oscillator2.type = 'sine';
+                    oscillator2.start(audioContext.currentTime + 0.1);
+                    oscillator2.stop(audioContext.currentTime + 0.6);
+                    break;
+                    
+                case 'click':
+                    oscillator.frequency.value = 400;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                    
+                case 'complete':
+                    // Play a victory melody
+                    const notes = [523, 587, 659, 784, 880];
+                    notes.forEach((freq, index) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        osc.type = 'sine';
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime + index * 0.2);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.2 + 0.5);
+                        osc.start(audioContext.currentTime + index * 0.2);
+                        osc.stop(audioContext.currentTime + index * 0.2 + 0.5);
+                    });
+                    break;
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioToggle').classList.toggle('muted');
+        }
+
+        // Planet rotation on hover
+        function setupPlanetInteractions() {
+            const planetImages = document.querySelectorAll('.planet-image');
+            
+            planetImages.forEach(planet => {
+                planet.addEventListener('mouseenter', () => {
+                    planet.style.animationPlayState = 'paused';
+                });
+                
+                planet.addEventListener('mouseleave', () => {
+                    planet.style.animationPlayState = 'running';
+                });
+            });
+        }
+
+        // Smooth scroll reveal animations
+        function setupScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.2,
+                rootMargin: '0px 0px -100px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            const planetSections = document.querySelectorAll('.planet-section');
+            planetSections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(50px)';
+                section.style.transition = 'opacity 1s ease, transform 1s ease';
+                observer.observe(section);
+            });
+        }
+
+        // Keyboard navigation
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') {
+                    window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+                } else if (e.key === 'ArrowUp') {
+                    window.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+                }
+            });
+        }
+
+        // Easter egg: Konami code
+        let konamiCode = [];
+        const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        
+        function setupEasterEgg() {
+            document.addEventListener('keydown', (e) => {
+                konamiCode.push(e.key);
+                konamiCode = konamiCode.slice(-10);
+                
+                if (konamiCode.join(',') === konamiSequence.join(',')) {
+                    activateEasterEgg();
+                }
+            });
+        }
+
+        function activateEasterEgg() {
+            // Create a UFO that flies across the screen
+            const ufo = document.createElement('div');
+            ufo.textContent = '🛸';
+            ufo.style.position = 'fixed';
+            ufo.style.fontSize = '5rem';
+            ufo.style.top = '50%';
+            ufo.style.left = '-100px';
+            ufo.style.zIndex = '10000';
+            ufo.style.transition = 'all 3s ease';
+            document.body.appendChild(ufo);
+            
+            setTimeout(() => {
+                ufo.style.left = '120%';
+            }, 100);
+            
+            setTimeout(() => {
+                ufo.remove();
+            }, 3100);
+            
+            playSound('complete');
+        }
+
+        // Mouse trail effect
+        function setupMouseTrail() {
+            let trails = [];
+            
+            document.addEventListener('mousemove', (e) => {
+                if (trails.length > 20) {
+                    const oldTrail = trails.shift();
+                    oldTrail.remove();
+                }
+                
+                const trail = document.createElement('div');
+                trail.style.position = 'fixed';
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                trail.style.width = '5px';
+                trail.style.height = '5px';
+                trail.style.borderRadius = '50%';
+                trail.style.background = 'rgba(0, 255, 255, 0.5)';
+                trail.style.pointerEvents = 'none';
+                trail.style.zIndex = '9999';
+                trail.style.transition = 'all 0.5s ease';
+                document.body.appendChild(trail);
+                trails.push(trail);
+                
+                setTimeout(() => {
+                    trail.style.opacity = '0';
+                    trail.style.transform = 'scale(2)';
+                }, 10);
+            });
+        }
+
+        // Auto-scroll hint
+        function setupScrollHint() {
+            const scrollHint = document.createElement('div');
+            scrollHint.textContent = '↓ Click to Launch, Then Scroll to Explore ↓'; // Updated hint
+            scrollHint.style.position = 'fixed';
+            scrollHint.style.bottom = '20px';
+            scrollHint.style.left = '50%';
+            scrollHint.style.transform = 'translateX(-50%)';
+            scrollHint.style.color = '#00ffff';
+            scrollHint.style.fontSize = '1.5rem';
+            scrollHint.style.textShadow = '0 0 10px #00ffff';
+            scrollHint.style.animation = 'pulse 2s ease-in-out infinite';
+            scrollHint.style.zIndex = '999';
+            scrollHint.style.fontFamily = 'Orbitron, sans-serif';
+            document.body.appendChild(scrollHint);
+            
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 100) {
+                    scrollHint.style.display = 'none';
+                }
+            }, { once: true });
+        }
+
+        // Planet unlock system (UPDATED to include new planets)
+        function setupPlanetUnlock() {
+            
+            planets.forEach((planet, index) => {
+                const section = document.getElementById(planet);
+                const button = section.querySelector('.collect-star-btn');
+                
+                if (index > 0) {
+                    section.style.filter = 'blur(10px)';
+                    section.style.pointerEvents = 'none';
+                    button.disabled = true;
+                    button.textContent = '🔒 Locked';
+                    
+                    // Add lock overlay
+                    const lockOverlay = document.createElement('div');
+                    lockOverlay.className = 'lock-overlay';
+                    lockOverlay.style.position = 'absolute';
+                    lockOverlay.style.top = '50%';
+                    lockOverlay.style.left = '50%';
+                    lockOverlay.style.transform = 'translate(-50%, -50%)';
+                    lockOverlay.style.fontSize = '5rem';
+                    lockOverlay.textContent = '🔒';
+                    lockOverlay.style.textShadow = '0 0 20px #fff';
+                    section.appendChild(lockOverlay);
+                }
+            });
+        }
+
+        function unlockNextPlanet() {
+            const currentIndex = starsCollected; // Stars collected is the index of the NEXT planet to unlock (0-indexed)
+            
+            if (currentIndex < planets.length) { // Check if there's a next planet
+                const nextPlanet = planets[currentIndex];
+                const section = document.getElementById(nextPlanet);
+                const button = section.querySelector('.collect-star-btn');
+                const lockOverlay = section.querySelector('.lock-overlay');
+                
+                setTimeout(() => {
+                    section.style.filter = 'blur(0px)';
+                    section.style.pointerEvents = 'auto';
+                    button.disabled = false;
+                    button.textContent = 'Collect Star ⭐';
+                    
+                    if (lockOverlay) {
+                        lockOverlay.style.transition = 'all 1s ease';
+                        lockOverlay.style.opacity = '0';
+                        lockOverlay.style.transform = 'translate(-50%, -50%) scale(2)';
+                        setTimeout(() => lockOverlay.remove(), 1000);
+                    }
+                    
+                    // Scroll to unlocked planet
+                    section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Show unlock notification
+                    showNotification(`${nextPlanet.toUpperCase()} UNLOCKED!`);
+                }, 500);
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.top = '50%';
+            notification.style.left = '50%';
+            notification.style.transform = 'translate(-50%, -50%) scale(0)';
+            notification.style.background = 'rgba(0, 255, 255, 0.9)';
+            notification.style.color = '#000';
+            notification.style.padding = '30px 60px';
+            notification.style.borderRadius = '20px';
+            notification.style.fontSize = '2rem';
+            notification.style.fontWeight = 'bold';
+            notification.style.zIndex = '10001';
+            notification.style.transition = 'all 0.5s ease';
+            notification.style.boxShadow = '0 0 50px #00ffff';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 10);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translate(-50%, -50%) scale(0)';
+                setTimeout(() => notification.remove(), 500);
+            }, 2000);
+        }
+
+        // Random cosmic events
+        function setupCosmicEvents() {
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    createComet();
+                }
+            }, 10000);
+        }
+
+        function createComet() {
+            const comet = document.createElement('div');
+            comet.style.position = 'fixed';
+            comet.style.width = '100px';
+            comet.style.height = '3px';
+            comet.style.background = 'linear-gradient(90deg, transparent, #fff, transparent)';
+            comet.style.top = Math.random() * 50 + '%';
+            comet.style.left = '100%';
+            comet.style.transform = 'rotate(-45deg)';
+            comet.style.boxShadow = '0 0 20px #fff';
+            comet.style.zIndex = '1';
+            comet.style.transition = 'all 2s linear';
+            document.body.appendChild(comet);
+            
+            setTimeout(() => {
+                comet.style.left = '-200px';
+                comet.style.top = (parseInt(comet.style.top) + 50) + '%';
+            }, 10);
+            
+            setTimeout(() => comet.remove(), 2000);
+        }
+
+        // Initialize everything
+        function init() {
+            createStarfield();
+            openBook();
+            setupRocketLaunch();
+            setupParallax();
+            setupPlanetInteractions();
+            setupScrollAnimations();
+            setupKeyboardControls();
+            setupEasterEgg();
+            setupMouseTrail();
+            setupScrollHint();
+            setupPlanetUnlock();
+            setupCosmicEvents();
+        }
+
+        // Start the experience when page loads
+        window.addEventListener('load', init);
+
+        // Prevent context menu for more immersive experience
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Add custom cursor
+        document.body.style.cursor = 'crosshair';
+    </script>
+    <footer>
+      <p>Created By SaVeya</p>
+    </footer>
+</body>
+</html>
